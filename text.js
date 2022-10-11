@@ -13,8 +13,6 @@ const chatArea = document.querySelector('#chatarea');
 const chatInput = document.querySelector('#chatInput');
 
 chatBtn.disabled = true;
-videoBtn.disabled = true;
-fileBtn.disabled = true;
 sendMsgBtn.disabled = true;
 hangUpBtn.disabled = true;
 
@@ -38,7 +36,7 @@ const ws  = (function() {
 	const open = function () {
 		return new Promise((res, rej) => {
 			//https://websockets.readthedocs.io/en/stable/topics/authentication.html
-			wsServer = new WebSocket(`ws://localhost:3000?token=${localStorage.Authorization}`); 
+			wsServer = new WebSocket(`wss://bobsm1.local:3000?token=${localStorage.Authorization}`); 
 
 			wsServer.onopen = function () { 
 				console.log("Connected to the signaling server");
@@ -101,8 +99,6 @@ brumeBtn.addEventListener("click", async function () {
 		try {
 			await ws.open();
 			chatBtn.disabled = false;
-			videoBtn.disabled = false;
-			fileBtn.disabled = false;
 			brumeBtn.textContent = 'Brume Disconnect';
 		} catch(e) {
 			alert(`Error connecting to Brume: ${e}`);
@@ -172,52 +168,6 @@ chatBtn.addEventListener("click", function () {
 		chatArea.style.display = '';
 		chatInput.style.display = '';
 	} 
-   
-});
-
-// Initiate Video
-videoBtn.addEventListener("click", async function () {
-	let localStream; //74
-	try {
-		localStream = await navigator.mediaDevices.getUserMedia({
-			video: true,
-			audio: true
-		});
-	} catch (error) {
-		alert(`${error.name}`);
-		console.error(error);
-	}
-	//86
-	document.querySelector('video#local').srcObject = localStream;
-
-	peerConnection = new RTCPeerConnection(iceServers);
-	peerConnection.addStream(localStream);
-	peerConnection.onaddstream = event => {
-		document.querySelector('video#remote').srcObject = event.stream;
-	};
-
-	peerConnection.onicecandidate = function (event) { 
-		if (event.candidate) { 
-			ws.send({ type: "candidate", candidate: event.candidate }); 
-		} 
-	}; 
-   
-	if (callToUsernameInput.value.length > 0) { 
-		connectedUser = callToUsernameInput.value;
-		peerConnection.createOffer(async function (offer) {
-			offer.app = 'av';
-			ws.send({ type: "offer", offer: offer }); 
-			await peerConnection.setLocalDescription(offer);
-			console.log('createOffer setLocalDescription');
-		}, function (error) { 
-			alert("Error when creating an offer"); 
-		});
-
-		hangUpBtn.disabled = false;
-		videoBtn.disabled = true;
-	} 
-
-	rtcMode = 'video';
    
 });
 
