@@ -2,8 +2,8 @@
 
 /***** Globals *****/
 
-let otherUsername = null;
-let connection = null;
+let peerUsername = null;
+let rtcConnection = null;
 let sendMessage = null;
 let localStream = null;
 
@@ -101,8 +101,8 @@ function wsConnect(url) {
 		};
 
 		function sendMessage(message){
-			/*if (otherUsername) {
-				message.name = otherUsername;
+			/*if (peerUsername) {
+				message.name = peerUsername;
 			}*/
 
 			if(ws == null) {
@@ -111,7 +111,7 @@ function wsConnect(url) {
 		
 			ws.send(JSON.stringify({
 				action: 'send',
-				to: otherUsername,
+				to: peerUsername,
 				data: {
 					...message
 				}
@@ -204,7 +204,7 @@ if(localStorage.Authorization && localStorage.Authorization != '') {
 
 /***** WebRTC video chat *****/
 
-const handleLogin = async () => {
+async function makePeerConnection(){
 	if(localStream == null){
 		try {
 			localStream = await navigator.mediaDevices.getUserMedia({
@@ -223,7 +223,7 @@ const handleLogin = async () => {
 		document.querySelector('video#local').srcObject = localStream;
 	}
 	console.log(`create connection`);
-	connection = new RTCPeerConnection({
+	const connection = new RTCPeerConnection({
 		iceServers: [{ url: 'stun:stun2.1.google.com:19302' }]
 	});
 
@@ -255,28 +255,29 @@ const handleLogin = async () => {
 			});
 		}
 	};
+	return connection;
 };
 
 callButton.addEventListener('click', async function() {
-	otherUsername = document.querySelector('input#username-to-call').value;
+	peerUsername = document.querySelector('input#username-to-call').value;
 
-	if (otherUsername.length === 0) {
+	if (peerUsername.length === 0) {
 		alert('Enter a username 😉');
 		return;
 	}
 
-	await handleLogin(true);
+	rtcConnection = await makePeerConnection(true);
 	localDiv.style.visibility = '';
-	remoteButton.innerHTML = `${otherUsername}'s video`;
+	remoteButton.innerHTML = `${peerUsername}'s video`;
 
-	connection.createOffer(
+	rtcConnection.createOffer(
 		offer => {
 			sendMessage({
 				type: 'offer',
 				offer: offer
 			});
 
-			connection.setLocalDescription(offer);
+			rtcConnection.setLocalDescription(offer);
 			console.log('createOffer setLocalDescription');
 		},
 		error => {
@@ -287,16 +288,16 @@ callButton.addEventListener('click', async function() {
 });
 
 const handleOffer = async (offer, username) => {
-	await handleLogin(true);
-	otherUsername = username;
+	rtcConnection = await makePeerConnection(true);
+	peerUsername = username;
 	localDiv.style.visibility = '';
 	remoteDiv.style.visibility = '';
-	remoteButton.innerHTML = `${otherUsername}'s video`;
+	remoteButton.innerHTML = `${peerUsername}'s video`;
 
-	connection.setRemoteDescription(offer);
-	connection.createAnswer(
+	rtcConnection.setRemoteDescription(offer);
+	rtcConnection.createAnswer(
 		answer => {
-			connection.setLocalDescription(answer);
+			rtcConnection.setLocalDescription(answer);
 			console.log('createAnswer setLocalDescription');
 			sendMessage({
 				type: 'answer',
@@ -316,7 +317,7 @@ const handleOffer = async (offer, username) => {
 };
 
 const handleAnswer = answer => {
-	connection.setRemoteDescription(answer);
+	rtcConnection.setRemoteDescription(answer);
 	remoteDiv.style.visibility = '';
 	callButton.classList.toggle('hidden');
 	closeButton.classList.toggle('hidden');
@@ -325,7 +326,7 @@ const handleAnswer = answer => {
 
 const handleCandidate = candidate => {
 	//console.log(`current remote description: ${connection.currentRemoteDescription != null ? true : false}`);
-	connection.addIceCandidate(candidate); //(new RTCIceCandidate(candidate));
+	rtcConnection.addIceCandidate(candidate); //(new RTCIceCandidate(candidate));
 };
 
 document.querySelector('button#close-call').addEventListener('click', () => {
@@ -338,7 +339,7 @@ document.querySelector('button#close-call').addEventListener('click', () => {
 
 const handleClose = () => {
 	console.log('closing connection');
-	otherUsername = null;
+	peerUsername = null;
 	localStream.getTracks().forEach(media => { media.enabled = false; });
 
 	// 10/6
@@ -363,8 +364,8 @@ const handleClose = () => {
 	remoteButton.style.textDecoration = 'line-through';
 	remoteDiv.style.visibility = 'hidden';
 	//initialize label of remote button
-	connection.close();
-	connection = null;
+	rtcConnection.close();
+	rtcConnection = null;
 };
 
 let firstUserGesture = true;
