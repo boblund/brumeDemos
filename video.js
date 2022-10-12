@@ -7,7 +7,7 @@ let connection = null;
 let sendMessage = null;
 let localStream = null;
 
-/***** UI *****/
+/***** Generic Login/App UI sections *****/
 
 const divLogin = document.querySelector('div#login');
 const loginStatus = document.querySelector('#loginStatus');
@@ -21,7 +21,11 @@ const LoginPage = {
 	}
 };
 
-const divCall = document.querySelector('div#call');
+const divApp = document.querySelector('div#app');
+divApp.style.display = 'none';
+
+/***** App specific UI sections *****/
+
 const userNameToCall = document.querySelector('input#username-to-call');
 const callButton = document.querySelector('button#call');
 const closeButton = document.querySelector('button#close-call');
@@ -35,7 +39,6 @@ remoteDiv.style.visibility = 'hidden';
 localDiv.style.visibility = 'hidden';
 localButton.style.textDecoration = 'line-through';
 remoteButton.style.textDecoration = 'line-through';
-divCall.style.display = 'none';
 
 /***** Websocket *****/
 
@@ -137,7 +140,7 @@ async function loggedIn(token) {
 	try {
 		sendMessage = await wsConnect(`${location.protocol == 'https:' ? 'wss' : 'ws'}://${location.host}?token=${token}`);
 		divLogin.style.display = 'none';
-		divCall.style.display = 'block';
+		divApp.style.display = 'block';
 		alert(`Signed in as ${username}`);
 	} catch(e) {
 		alert(`Error connecting to Brume server: ${location.protocol == 'https:' ? 'wss' : 'ws'}://${location.host}?token= ...token`);
@@ -191,70 +194,67 @@ if (localStorage.checkbox && localStorage.checkbox !== "") {
 }
 
 if(localStorage.Authorization && localStorage.Authorization != '') {
-	if(new Date(JSON.parse(atob(localStorage.Authorization.split('.')[1])).exp * 1000) < new Date()) {
+	if(new Date(JSON.parse(atob(localStorage.Authorization.split('.')[1])).exp * 1000) >= new Date()) {
 		loggedIn(localStorage.Authorization);
 	} else {
+		divLogin.classList.toggle('hidden');
 		delete localStorage.Authorization;
 	}
 }
 
-/***** WebRTC *****/
+/***** WebRTC video chat *****/
 
-const handleLogin = async success => {
-	if (success === false) {
-		alert('😞 Username already taken');
-	} else {
-		if(localStream == null){
-			try {
-				localStream = await navigator.mediaDevices.getUserMedia({
-					video: true,
-					audio: true
-				});
-			} catch (error) {
-				alert(`navigator.mediaDevices.getUserMedia: ${error.name}`);
-				console.error(`navigator.mediaDevices.getUserMedia: ${JSON.stringify(error)}`);
-			}
-
-			localStream.getTracks().forEach(media => {
-				media.enabled = false;
+const handleLogin = async () => {
+	if(localStream == null){
+		try {
+			localStream = await navigator.mediaDevices.getUserMedia({
+				video: true,
+				audio: true
 			});
-
-			document.querySelector('video#local').srcObject = localStream;
+		} catch (error) {
+			alert(`navigator.mediaDevices.getUserMedia: ${error.name}`);
+			console.error(`navigator.mediaDevices.getUserMedia: ${JSON.stringify(error)}`);
 		}
-		console.log(`create connection`);
-		connection = new RTCPeerConnection({
-			iceServers: [{ url: 'stun:stun2.1.google.com:19302' }]
+
+		localStream.getTracks().forEach(media => {
+			media.enabled = false;
 		});
 
-		console.log(`created connection`);
-
-		connection.onclose = e=> {
-			handleClose();
-		};
-
-		connection. onconnectionstatechange = () => {
-			console.log(`connectionState: ${connection.connectionState}`);
-			if (["disconnected", "failed", "closed"].includes(connection.connectionState)) {
-				console.log(`remote closed connection`);
-				handleClose();
-			}
-		};
-
-		connection.addStream(localStream);
-
-		connection.onaddstream = event => {
-			document.querySelector('video#remote').srcObject = event.stream;
-		};
-
-		connection.onicecandidate = event => {
-			if (event.candidate) {
-				sendMessage({
-					type: 'candidate',
-					candidate: event.candidate
-				});
-			}
-		};
+		document.querySelector('video#local').srcObject = localStream;
 	}
+	console.log(`create connection`);
+	connection = new RTCPeerConnection({
+		iceServers: [{ url: 'stun:stun2.1.google.com:19302' }]
+	});
+
+	console.log(`created connection`);
+
+	connection.onclose = e=> {
+		handleClose();
+	};
+
+	connection. onconnectionstatechange = () => {
+		console.log(`connectionState: ${connection.connectionState}`);
+		if (["disconnected", "failed", "closed"].includes(connection.connectionState)) {
+			console.log(`remote closed connection`);
+			handleClose();
+		}
+	};
+
+	connection.addStream(localStream);
+
+	connection.onaddstream = event => {
+		document.querySelector('video#remote').srcObject = event.stream;
+	};
+
+	connection.onicecandidate = event => {
+		if (event.candidate) {
+			sendMessage({
+				type: 'candidate',
+				candidate: event.candidate
+			});
+		}
+	};
 };
 
 callButton.addEventListener('click', async function() {
