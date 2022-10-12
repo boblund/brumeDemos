@@ -3,8 +3,6 @@
 // UI
 const callToUsernameInput = document.querySelector('#callToUsernameInput');
 const chatBtn = document.querySelector('#chatBtn');
-const videoBtn = document.querySelector('#videoBtn');
-const fileBtn = document.querySelector('#fileBtn');
 const hangUpBtn = document.querySelector('#hangUpBtn');
 const brumeBtn = document.querySelector('#brumeBtn');
 const msgInput = document.querySelector('#msgInput');
@@ -107,8 +105,6 @@ brumeBtn.addEventListener("click", async function () {
 		ws.close();
 		brumeBtn.textContent = 'Brume Connect';
 		chatBtn.disabled = true;
-		videoBtn.disabled = true;
-		fileBtn.disabled = true;
 	}
 });
 
@@ -195,82 +191,39 @@ sendMsgBtn.addEventListener("click", function (event) {
  
 // Handle WebRTC offer
 async function handleOffer(offer, name) {
-	const offerMeda = offer.sdp
-		.split('\r\nm=').slice(1)
-		.map(e=>e.split('\r\n')[0].split(' ')[0]);
-
-	//93
 	peerConnection = new RTCPeerConnection(iceServers); 
-		
-	// 104 
 	peerConnection.onicecandidate = function (event) {
 		if (event.candidate) { 
 			ws.send({ type: "candidate", candidate: event.candidate }); 
 		} 
 	};
 
-	connectedUser = name; // 142
-	const appType = offer.app;
-	delete offer.app;
-	await peerConnection.setRemoteDescription(offer); //(new RTCSessionDescription(offer));
+	connectedUser = name;
+	await peerConnection.setRemoteDescription(offer); 
 	remoteDescriptionSet = true;
 	handleCandidate();
 	console.log('offer setRemoteDescription');
   
-	switch(appType) {
-		case 'av':
-			let localStream; //74
-			try {
-				localStream = await navigator.mediaDevices.getUserMedia({
-					video: true,
-					audio: true
-				});
-			} catch (error) {
-				alert(`${error.name}`);
-				console.error(error);
-			}
-			// 86
-			document.querySelector('video#local').srcObject = localStream;
-			// 96
-			peerConnection.addStream(localStream);
-			// 99
-			peerConnection.onaddstream = event => {
-				document.querySelector('video#remote').srcObject = event.stream;
-			};
-			//143
-			//await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-			break;
 
-		case 'text':
-			peerConnection.ondatachannel = function (event) {
-				sendMsgBtn.disabled = false;
-				chatArea.style.display = '';
-				chatInput.style.display = '';
-				console.log('dataChannel opened');
-				dataChannel = event.channel;
-		
-				dataChannel.onmessage = function (event) { 
-					chatArea.innerHTML += connectedUser + ": " + event.data + "<br />";
-					chatArea.scrollTop = chatArea.scrollHeight;
-				};
+	peerConnection.ondatachannel = function (event) {
+		sendMsgBtn.disabled = false;
+		chatArea.style.display = '';
+		chatInput.style.display = '';
+		console.log('dataChannel opened');
+		dataChannel = event.channel;
 
-				dataChannel.onerror = function (error) { 
-					console.log("Ooops...error:", error); 
-				};
+		dataChannel.onmessage = function (event) { 
+			chatArea.innerHTML += connectedUser + ": " + event.data + "<br />";
+			chatArea.scrollTop = chatArea.scrollHeight;
+		};
 
-				dataChannel.onclose = dataChannelOnClose;
-			};
-			chatBtn.disabled = true;
-			break;
-		
-		case 'file':
-			break;
+		dataChannel.onerror = function (error) { 
+			console.log("Ooops...error:", error); 
+		};
 
-		default:
-			console.error(`Unknown offer.app: ${offer.ap}`);
-	}
+		dataChannel.onclose = dataChannelOnClose;
+	};
 
-	// 144
 	peerConnection.createAnswer(async function (answer) { 
 		await peerConnection.setLocalDescription(answer); 
 		console.log('createAnswer setLocalDescription');
