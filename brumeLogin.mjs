@@ -9,12 +9,13 @@ const LoginPage = {
 		RememberMeChkBx: document.getElementById('LoginPage.Form.RememberMeCkhBx'),
 		PasswordDiv: document.getElementById('LoginPage.Form.PasswordDiv'),
 		Password: document.getElementById('LoginPage.Form.Password'),
-		SubmitLogin: document.getElementById('LoginPage.Form.SubmitLogin')
+		SubmitLogin: document.getElementById('LoginPage.Form.SubmitLogin'),
+		Bi: document.querySelector('i.bi')
 	}
 };
 
 LoginPage.Form.SubmitLogin.addEventListener('click', processLogin);
-LoginPage.Form.Password.addEventListener('click', doToggle);
+LoginPage.Form.Bi.addEventListener('click', doToggle);
 
 const CLIENTID = '6dspdoqn9q00f0v42c12qvkh5l';
 const REGION = 'us-east-1';
