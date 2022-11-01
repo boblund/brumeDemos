@@ -1,7 +1,7 @@
 'use strict';
 
-import {wsConnect} from './brumeWebsocket.js';
-import {getToken} from './brumeLogin.js';
+import {wsConnect} from './websocket.mjs';
+import {getToken} from './brumeLogin.mjs';
 
 const rtcMsgHandlers = {
 	offer: handleOffer,
