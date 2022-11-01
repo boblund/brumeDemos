@@ -1,0 +1,4 @@
+#browserify SimplePeer.js |es6ify > simplepeer.browserify.js
+#minify simplepeer.browserify.js > simplepeer.min.mjs
+echo "import {SimplePeer} from './simplepeer.min.mjs';"
+cat ../brumePeer.mjs

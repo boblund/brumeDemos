@@ -1,0 +1,15 @@
+{
+  "name": "simplepeerdata-min",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1243.0",
+    "simple-peer": "^9.11.1"
+  }
+}

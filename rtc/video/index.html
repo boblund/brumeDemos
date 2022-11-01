@@ -1,0 +1,99 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css" />
+
+		<style>
+			html,body {
+				margin: 10px;
+				height:100%;
+				width:100%
+			}
+
+			.local-div {
+				position: relative;
+			 	height:20%;
+				width:auto;
+				margin:5px;
+				z-index: 0;
+			}
+
+			.video-button {
+				position: absolute;
+				bottom: 2px;
+				left: 2px;
+				z-index: 1;
+			}
+
+			.remote-div{
+				position: relative;
+			 	height:60%;
+				width:auto;
+				margin:5px;
+			}
+
+			.video-div {
+				position: relative;
+			}
+
+			.fit-video {
+				width: auto;
+				height: 100%;
+				object-fit: cover;
+			}
+
+			.invisible {
+				visibility: hidden;
+			}
+
+			.hidden {
+				display: none;
+			}
+
+		</style>
+	</head>
+	<body>
+		<div id="login" class="hidden">
+			<form onsubmit="event.preventDefault()" id="LoginPage.Form">
+
+				<div id="LoginPage.Form.EmailDiv">
+					<input type="text" placeholder="Email" name="email" id="LoginPage.Form.Email">
+
+					<input type="checkbox" value="lsRememberMe" id="LoginPage.Form.RememberMeCkhBx">
+					<label for="LoginPage.Form.RememberMeCkhBx">Remember me</label>
+				</div>
+
+				<div id="LoginPage.Form.PasswordDiv">
+					<input type="password" placeholder="Password" class="bieye" id="LoginPage.Form.Password"/>
+					<i class="bi bi-eye-slash" for="LoginPage.Form.Password" onclick="doToggle(event)"></i>
+				</div>
+
+				<div id="loginStatus"></div></br>
+
+				<input type="submit" class="w3-teal" value="Login" 
+					id="LoginPage.Form.SubmitLogin" onclick="processLogin()">
+			</form>
+		</div>
+		<div id="app" class="hidden">
+			<div style="margin-top: 5px; margin-left: 5px;">
+				<input id="username-to-call" placeholder="Username to call" />
+				<button id="call">Call</button>
+				<button id="close-call" class="hidden">Close call</button>
+			</div>
+
+			<div id="localDiv" class='local-div'>
+				<video id='local' class="fit-video"></video>
+				<button id="localButton" class="video-button local" style="width:auto; height:17px; font-size:12px; line-height: 0px;" onclick="toggle('local')">Your video</button>
+			</div>
+			<div id="remoteDiv" class="remote-div">
+				<video id='remote' class="fit-video"></video>
+				<button id="remoteButton" class="video-button remote" style="width:auto; height:17px; font-size:12px; line-height: 0px;" onclick="toggle('remote')">Remote video</button>
+			</div>
+		</div>
+	</body>
+	<script src="https://sdk.amazonaws.com/js/aws-sdk-2.726.0.js"></script>
+	<script src="video.js"></script>
+</html>
+
+
