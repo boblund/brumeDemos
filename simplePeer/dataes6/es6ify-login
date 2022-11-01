@@ -1,4 +1,6 @@
 browserify Cognito.js |es6ify > cognitoidentityserviceprovider.browserify.js
 minify cognitoidentityserviceprovider.browserify.js > cognitoidentityserviceprovider.min.mjs
-echo "import {CognitoIdentityServiceProvider} from './cognitoidentityserviceprovider.min.js';"
-cat ../../brumeLogin.mjs | sed 's/AWS\.CognitoIdentityServiceProvider/CognitoIdentityServiceProvider/'
+(
+	echo "import {CognitoIdentityServiceProvider} from './cognitoidentityserviceprovider.min.js';"
+	cat ../../brumeLogin.mjs | sed 's/AWS\.CognitoIdentityServiceProvider/CognitoIdentityServiceProvider/'
+) > login.mjs
