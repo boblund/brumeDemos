@@ -1,3 +1,3 @@
 'use strict';
 
-exports.CognitoIdentityServiceProvider = require('aws-sdk/clients/cognitoidentityserviceprovider'); //es6ify
+exports.CognitoISP = require('aws-sdk/clients/cognitoidentityserviceprovider'); //es6ify

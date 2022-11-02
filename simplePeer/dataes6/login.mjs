@@ -1,4 +1,4 @@
-import {CognitoIdentityServiceProvider} from './cognitoidentityserviceprovider.min.js';
+import {CognitoISP} from './cognitoisp.min.js';
 'use strict';
 
 export {getToken};
@@ -19,7 +19,7 @@ LoginPage.Form.SubmitLogin.addEventListener('click', processLogin);
 
 const CLIENTID = '6dspdoqn9q00f0v42c12qvkh5l';
 const REGION = 'us-east-1';
-const cognito = new CognitoIdentityServiceProvider({region : REGION});
+const cognito = new CognitoISP({region : REGION});
 
 function doToggle(event) {
 	// toggle the type attribute
