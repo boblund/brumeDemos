@@ -1,0 +1,31 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css" />
+	</head>
+	<body>
+		<custom-login id="login1" loaded="false"></custom-login>
+		<custom-login id="login2" loaded="false"></custom-login>
+	</body>
+	<script type="module">
+		import {elementLoaded} from './login.mjs';
+		
+		(async () => {
+			const login1 = await elementLoaded('login1');
+			login1.submitLogin.addEventListener('click', () => {
+				if (login1.rememberMeChkBx.checked && login1.email.value !== "") {
+					localStorage.email = login1.email.value;
+					localStorage.checkbox = login1.rememberMeChkBx.value;
+				} else {
+					localStorage.email = "";
+					localStorage.checkbox = "";
+				}
+				alert(`${login1.email.value} ${login1.password.value}`);
+			});
+			const login2 = await elementLoaded('login2');
+			login2.submitLogin.addEventListener('click', () => {
+				alert(`${login2.email.value} ${login2.password.value}`);
+			});
+		})()
+	</script>
+</html>
+
