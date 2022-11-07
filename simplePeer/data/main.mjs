@@ -74,6 +74,10 @@ function peerInit(peer) {
 			case 'ENODEST':
 				alert(`${data.edata.receiver} is not connected`);
 				break;
+
+			case 'EOFFERTIMEOUT':
+				alert(`${data.edata.receiver} did not answer`);
+				break;	
 	
 			default:
 				alert(`peerError: ${data.data}`);
@@ -85,10 +89,12 @@ function peerInit(peer) {
 // App brumeConnection action handlers
 
 async function offerHandler(offer, name, channelId) {
-	peerUsername = name;
-	peer = brumeConnection.makePeer({channelId});
-	peerInit(peer);
-	await peer.connect(name, offer);
+	if(confirm(`Accept call from ${name}?`)){
+		peerUsername = name;
+		peer = brumeConnection.makePeer({channelId});
+		peerInit(peer);
+		await peer.connect(name, offer);
+	}
 };
 
 

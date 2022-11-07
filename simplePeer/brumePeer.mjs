@@ -11,6 +11,18 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 		sendMessage = null,
 		peers = {};
 
+	function offerTimeout(peer) {
+		peer.emit('peerError', {
+			type: "peerError",
+			code: "EOFFERTIMEOUT",
+			edata: {
+				channelId: peer.channelId,
+				receiver: peer.peerUsername
+			}
+		});
+		delete peers[peer];
+	}
+
 	function wsConnect(token) {
 		return new Promise((res, rej) => {
 			let ws = new WebSocket(`${location.protocol == 'https:' ? 'wss' : 'ws'}://${location.host}?token=${token}`);
@@ -40,6 +52,9 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 		
 					case 'answer':	
 					case 'candidate':
+						if(type == 'answer'){
+							clearTimeout(peers[data.data.channelId].offerTimer);
+						}
 						if(peers[data.data.channelId]){
 							peers[data.data.channelId].signal(data.data[type]);
 						}
@@ -108,6 +123,9 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 						msg[data.type] = data;
 					}
 					msg.channelId = peer.channelId;
+					if(data.type == 'offer') {
+						peer.offerTimer = setTimeout(()=>{offerTimeout(peer);}, 60 * 1000);
+					}
 					sendMessage(peerName, msg);
 				});
 

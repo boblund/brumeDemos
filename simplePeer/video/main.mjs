@@ -74,7 +74,11 @@ function peerInit(peer) {
 			case 'ENODEST':
 				alert(`${data.edata.receiver} is not connected`);
 				break;
-	
+
+			case 'EOFFERTIMEOUT':
+				alert(`${data.edata.receiver} did not answer`);
+				break;
+				
 			default:
 				alert(`peerError: ${data.data}`);
 		}
@@ -107,14 +111,16 @@ async function getMedia() {
 // App brumeConnection action handlers
 
 async function offerHandler(offer, name, channelId) {
-	peerUsername = name;
-	localStream = await getMedia();
-	peer = brumeConnection.makePeer({channelId, stream: localStream });
-	peer.peerUsername = name;
-	peerInit(peer);
-	await peer.connect(name, offer);
-	localDiv.classList.remove('invisible');
-	remoteButton.innerHTML = `${peerUsername}'s video`;
+	if(confirm(`Accept call from ${name}?`)){
+		peerUsername = name;
+		localStream = await getMedia();
+		peer = brumeConnection.makePeer({channelId, stream: localStream });
+		peer.peerUsername = name;
+		peerInit(peer);
+		await peer.connect(name, offer);
+		localDiv.classList.remove('invisible');
+		remoteButton.innerHTML = `${peerUsername}'s video`;
+	}
 };
 
 

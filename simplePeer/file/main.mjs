@@ -10,8 +10,6 @@ let token = null,
 
 const divLogin = document.querySelector('div#login');
 const divApp = document.querySelector('div#app');
-const saveFileBtn = document.querySelector('#saveFileBtn');
-const outFile = document.querySelector('#outFile');
 
 divLogin.classList.add('hidden');
 divApp.classList.add('hidden');
@@ -51,12 +49,47 @@ async function loginCallBack(brumeToken) {
 // App stuff
 
 let peer = null,
-	peerUsername = null,
-	received = 0,
+	peerUsername = null;
+
+function peerInit(peer) {
+	peer.on('connect', () => {
+		hangUpBtn.classList.remove('hidden');
+		callBtn.classList.add('hidden');
+		sendFile.classList.remove('hidden');
+	});
+
+	peer.once('data', saveResultHandler);
+
+	peer.on('closed',  () => {
+		console.log(`peer closed`);
+		handleClose();
+	});
+
+	peer.on('peerError', (data) => {
+		switch(data.code) {
+			case 'ENODEST':
+				alert(`${data.edata.receiver} is not connected`);
+				break;
+			
+			case 'EOFFERTIMEOUT':
+				alert(`${data.edata.receiver} did not answer`);
+				break;
+				
+			default:
+				alert(`peerError: ${data.data}`);
+		}
+		handleClose();
+	});
+}
+
+let	received = 0,
 	size = 0,
 	name = '',
 	writableStream = null,
 	reader = null;
+
+const saveFileBtn = document.querySelector('#saveFileBtn');
+const outFile = document.querySelector('#outFile');
 
 async function saveResultHandler(_msg) {
 	let msg = JSON.parse(_msg.toString());
@@ -132,42 +165,16 @@ async function saveResultHandler(_msg) {
 	}
 }
 
-function peerInit(peer) {
-	peer.on('connect', () => {
-		hangUpBtn.classList.remove('hidden');
-		callBtn.classList.add('hidden');
-		sendFile.classList.remove('hidden');
-	});
-
-	peer.once('data', saveResultHandler);
-
-	peer.on('closed',  () => {
-		console.log(`peer closed`);
-		handleClose();
-	});
-
-	peer.on('peerError', (data) => {
-		switch(data.code) {
-			case 'ENODEST':
-				alert(`${data.edata.receiver} is not connected`);
-				break;
-	
-			default:
-				alert(`peerError: ${data.data}`);
-		}
-		handleClose();
-	});
-}
-
 // App brumeConnection action handlers
 
 async function offerHandler(offer, name, channelId) {
-	peerUsername = name;
-	peer = brumeConnection.makePeer({channelId});
-	peerInit(peer);
-	await peer.connect(name, offer);
+	if(confirm(`Accept call from ${name}?`)){
+		peerUsername = name;
+		peer = brumeConnection.makePeer({channelId});
+		peerInit(peer);
+		await peer.connect(name, offer);
+	}
 };
-
 
 function handleClose() {
 	console.log('closing connection');
