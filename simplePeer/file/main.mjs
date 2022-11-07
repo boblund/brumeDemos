@@ -62,6 +62,7 @@ async function saveResultHandler(_msg) {
 	let msg = JSON.parse(_msg.toString());
 	switch(msg.type) {
 		case 'start':
+			inFile.classList.add('hidden');
 			({name, size} = msg.data);
 			saveFileBtn.classList.remove('hidden');
 			outFile.classList.remove('hidden');
@@ -77,13 +78,8 @@ async function saveResultHandler(_msg) {
 				switch(msg.type) {
 					case 'chunk':
 						const chunk = new Uint8Array(msg.data);
+						received += chunk.length;
 						await writableStream.write(chunk);
-						if((received += chunk.length) > size) {
-							await writableStream.close();
-							peer.send(JSON.stringify({type: 'result', status: 'failed: received too many bytes'}));
-							alert('Transfer ' + 'failed: received too many bytes');
-							received = 0;
-						}
 						break;
 			
 					case 'eof':
@@ -96,6 +92,12 @@ async function saveResultHandler(_msg) {
 						}
 						await writableStream.close();
 						received = 0;
+						size = 0;
+						name = '';
+						writableStream = null;
+						reader = null;
+						outFile.classList.add('hidden');
+						inFile.classList.remove('hidden');
 						break;
 				}
 			});
@@ -116,6 +118,14 @@ async function saveResultHandler(_msg) {
 
 		case 'result':
 			alert('Transfer ' + msg.result);
+			received = 0;
+			size = 0;
+			name = '';
+			writableStream = null;
+			reader = null;
+			outFile.classList.add('hidden');
+			inFile.classList.remove('hidden');
+			inFile.value = '';
 			break;
 
 		default:
@@ -190,7 +200,7 @@ callBtn.addEventListener('click', async (e) => {
 	}
 });
 
-inFile.onchange = async (evt) => {
+inFile.onchange = (evt) => {
 	peer.send(JSON.stringify({
 		type: 'start',
 		data: {
@@ -200,14 +210,6 @@ inFile.onchange = async (evt) => {
 	}));
 	const stream = inFile.files[ 0 ].stream();
 	reader = stream.getReader();
-	/*while( true ) {
-		const { done, value } = await reader.read();
-		if( done ) {
-			console.log("peer.send(JSON.stringify({type: 'eof'})");
-			break;
-		}
-		console.log('peer.send( value )');
-	}*/
 };
 
 // hangup button handler
