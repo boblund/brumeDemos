@@ -3,6 +3,7 @@
 import {BrumePeer} from '../brumePeer.mjs';
 import {getToken} from '../../brumeLogin.mjs';
 
+/***** This section doesn't change between apps that use the Brume app template *****/
 let token = null,
 	myName = null,
 	brumeConnection = null;
@@ -13,20 +14,16 @@ const divApp = document.querySelector('div#app');
 divLogin.classList.add('hidden');
 divApp.classList.add('hidden');
 
-// Either returns a localStorage token or presents a login
-// page that calls loginCallBack with a token
-
 token = getToken(loginCallBack);
 
 if(token != null) {
-	// localStorage token
 	divLogin.classList.add('hidden');
 	divApp.classList.remove('hidden');
 
 	// Delay if reload due to AWS websocket connect/disconnect race condition
 	setTimeout(
 		async ()=> {
-			await loginCallBack(token), //sendMessage = await wsConnect(token, rtcMsgHandlers);
+			await loginCallBack(token),
 			divApp.classList.remove('hidden');
 		},
 		sessionStorage.reload ? 1000 : 0
@@ -44,6 +41,7 @@ async function loginCallBack(brumeToken) {
 	brumeConnection = await (new BrumePeer(myName, offerHandler, token));
 	divApp.classList.remove('hidden');
 };
+/***** End of section that doesn't change between apps that use the Brume app template *****/
 
 // App stuff
 
@@ -60,8 +58,6 @@ function peerInit(peer) {
 
 	peer.on('data', data => {
 		dataArea.innerHTML = `Data from ${peer.peerUsername}: ${data}`;
-		//peer.send(`Hi ${peerUsername}`);
-		//handleHangup();
 	});
 
 	peer.on('closed', () => {
@@ -96,7 +92,6 @@ async function offerHandler(offer, name, channelId) {
 		await peer.connect(name, offer);
 	}
 };
-
 
 function handleClose() {
 	console.log('closing connection');
