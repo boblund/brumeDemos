@@ -10,8 +10,9 @@
 		import {elementLoaded} from './new-login.mjs';
 		
 		(async () => {
-			const [login1, login2] = (await elementLoaded(['login1', 'login2']))
-			 .map(e=>e.value ? e.value : null);
+			const [login1, login2] = (await elementLoaded(['login1', 'login2'])) // Promise.selectAll return
+			 .map(e=>e.value ? e.value : null); // Array with element Ids or null if not available
+
 			login1.submitLogin.addEventListener('click', () => {
 				if(login1.rememberMeChkBx.checked && login1.email.value !== "") {
 					localStorage.email = login1.email.value;
