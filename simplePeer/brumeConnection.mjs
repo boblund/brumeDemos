@@ -19,6 +19,7 @@ divApp.classList.add('hidden');
 
 token = getToken(_token => {
 	token = _token;
+	myName = JSON.parse(atob(token.split('.')[1]))['custom:brume_name'];
 	divLogin.classList.add('hidden');
 	divApp.classList.remove('hidden');
 	loginWait.dispatchEvent(new CustomEvent('loggedIn'));
