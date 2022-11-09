@@ -69,6 +69,7 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 
 					case 'peerError':
 						if(peers[data.edata.channelId]) {
+							clearTimeout(peers[data.edata.channelId].offerTimer);
 							peers[data.edata.channelId].emit('peerError', data);
 							delete peers[data.edata.channelId];
 						}
