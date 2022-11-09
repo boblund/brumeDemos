@@ -97,6 +97,7 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 
 	this.makePeer = (options) => {
 		const	peer = new SimplePeer(options);
+		peer.myName = myName;
 
 		if(options.initiator) {
 			peer.channelId = myName + Math.random().toString(10).slice(2,8,);
