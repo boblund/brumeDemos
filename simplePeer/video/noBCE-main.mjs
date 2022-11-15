@@ -1,27 +1,86 @@
 'use strict';
 
-import {BrumeConnection} from '../brumeConnection.mjs';
-const brumeConnection = await (new BrumeConnection(offerHandler));
-let callElem = null;
-if(customElements.get('brume-call')) {
-	callElem = document.getElementById('call');
+import {BrumePeer} from '../brumePeer.mjs';
+import {getToken} from '../brumeLogin.mjs';
+
+const brumeLogin = new function(){
+	return {
+		submitLogin: document.querySelector('#submitLogin'),
+		email: document.querySelector('#email'),
+		password: document.querySelector('#password'),
+		checkbox: document.querySelector('#checkbox'),
+		loginStatus: document.querySelector('#loginStatus')
+	};
+};
+
+const bi = document.querySelector('i.bi');
+bi.addEventListener('click', doToggle);
+
+function doToggle(event) {
+	let password = document.getElementById(event.currentTarget.attributes.getNamedItem('for').value);
+	password.type = password.type === "password" ? "text" : "password";
+	event.currentTarget.classList.toggle("bi-eye");
 }
+
+let token = null,
+	myName = null,
+	brumeConnection = null,
+	localStream = null;
+
+const divLogin = document.querySelector('div#login');
+const divApp = document.querySelector('div#app');
+
+divLogin.classList.add('hidden');
+divApp.classList.add('hidden');
+
+// Either returns a localStorage token or presents a login
+// page that calls loginCallBack with a token
+
+token = getToken(loginCallBack, brumeLogin);
+
+if(token != null) {
+	// localStorage token
+	divLogin.classList.add('hidden');
+	divApp.classList.remove('hidden');
+
+	// Delay if reload due to AWS websocket connect/disconnect race condition
+	setTimeout(
+		async ()=> {
+			await loginCallBack(token), //sendMessage = await wsConnect(token, rtcMsgHandlers);
+			divApp.classList.remove('hidden');
+		},
+		sessionStorage.reload ? 1000 : 0
+	);
+	sessionStorage.reload = 'yes';
+
+} else {
+	divLogin.classList.remove('hidden');
+}
+
+async function loginCallBack(brumeToken) {
+	token = brumeToken;
+	myName = JSON.parse(atob(token.split('.')[1]))['custom:brume_name'];
+	divLogin.classList.add('hidden');
+	brumeConnection = await (new BrumePeer(myName, offerHandler, token));
+	divApp.classList.remove('hidden');
+};
 
 // App stuff
 
 let peer = null;
 let peerUsername = null;
 
-function peerInit(peer) {
+function peerInit(peer) {	
 	peer.on('connect', () => {
-		callElem.hangUp();
+		hangUpBtn.classList.remove('hidden');
+		callBtn.classList.add('hidden');
 	});
 
 	peer.on('data', data => {});
 
 	peer.on('stream', stream => {
 		document.querySelector('video#remote').srcObject = stream;
-		remoteDiv.style.visibility = 'visible';
+		remoteDiv.classList.remove('invisible');
 	});
 
 	peer.on('closed', () => {
@@ -38,15 +97,13 @@ function peerInit(peer) {
 			case 'EOFFERTIMEOUT':
 				alert(`${data.edata.receiver} did not answer`);
 				break;
-
+				
 			default:
 				alert(`peerError: ${data.data}`);
 		}
 		handleClose();
 	});
 }
-
-let localStream = null;
 
 async function getMedia() {
 	if(localStream == null){
@@ -74,24 +131,25 @@ async function getMedia() {
 
 async function offerHandler(offer, name, channelId) {
 	if(confirm(`Accept call from ${name}?`)){
-		callElem.name.value = `call from ${name}`;
 		peerUsername = name;
 		localStream = await getMedia();
-		peer = brumeConnection.makePeer({channelId, stream: localStream});
+		peer = brumeConnection.makePeer({channelId, stream: localStream });
+		peer.peerUsername = name;
 		peerInit(peer);
 		await peer.connect(name, offer);
-		localDiv.style.visibility = 'visible';
-		remoteButton.innerHTML = `${name}'s video`;
+		localDiv.classList.remove('invisible');
+		remoteButton.innerHTML = `${peerUsername}'s video`;
 	}
 };
 
+
 function handleClose() {
 	console.log('closing connection');
-	peer.close();
-	peer.destroy();
+	peerUsername = null;
 	peer = null;
-	callElem.call();
-	callElem.name.value = '';
+	callBtn.classList.remove('hidden');
+	hangUpBtn.classList.add('hidden');
+	callToUsernameInput.value = '';
 	localStream.getTracks().forEach(media => { media.enabled = false; });
 	localStream.getVideoTracks()[0].stop();
 	localStream = null;
@@ -107,13 +165,17 @@ function handleClose() {
 	localButton.style.textDecoration = 'line-through';
 	remoteButton.innerHTML = 'Remote video';
 	remoteButton.style.textDecoration = 'line-through';
-	remoteDiv.style.visibility = 'hidden';
-	localDiv.style.visibility = 'hidden';
+	remoteDiv.classList.add('invisible');
+	localDiv.classList.add('invisible');
 };
 
 // App UI logic
-callElem.call();
 
+const callToUsernameInput = document.querySelector('#callToUsernameInput');
+const callBtn = document.querySelector('#callBtn');
+const hangUpBtn = document.querySelector('#hangUpBtn');
+callBtn.classList.remove('hidden');
+hangUpBtn.classList.add('hidden');
 const localDiv = document.getElementById('localDiv');
 const localButton = document.querySelector('button.local');
 const remoteDiv = document.getElementById('remoteDiv');
@@ -122,32 +184,32 @@ const remoteButton = document.querySelector('button.remote');
 localButton.addEventListener('click', ()=>{toggle('local');});
 remoteButton.addEventListener('click', ()=>{toggle('remote');});
 
-remoteDiv.style.visibility = 'hidden';
-localDiv.style.visibility = 'hidden';
+remoteDiv.classList.add('invisible');
+localDiv.classList.add('invisible');
 localButton.style.textDecoration = 'line-through';
 remoteButton.style.textDecoration = 'line-through';
 
 // call button handler
-callElem.callBtn.addEventListener('click', async (e) => {		 
-	if (callElem.name.value.length > 0) { 
-		peerUsername = callElem.name.value;
+callBtn.addEventListener('click', async (e) => {		 
+	if (callToUsernameInput.value.length > 0) { 
+		peerUsername = callToUsernameInput.value;
 		localStream = await getMedia();
 		peer = brumeConnection.makePeer({initiator: true, stream: localStream });
-		peer.peerUsername = callElem.name.value;
+		peer.peerUsername = callToUsernameInput.value;
 		peerInit(peer);
-		await peer.connect(callElem.name.value);
-		localDiv.style.visibility = 'visible';
-		remoteButton.innerHTML = `${callElem.name.value}'s video`;
+		await peer.connect(callToUsernameInput.value);
+		localDiv.classList.remove('invisible');
+		remoteButton.innerHTML = `${peerUsername}'s video`;
 	}
 });
 
 // hangup button handler
-callElem.hangUpBtn.addEventListener("click", function () {
+hangUpBtn.addEventListener("click", function () {
 	peer.close();
 	peer.destroy();
 	peer = null;
-	callElem.call();
-	callElem.name.value = '';
+	hangUpBtn.classList.add('hidden');
+	callBtn.classList.remove('hidden');
 });
 
 let firstUserGesture = true;

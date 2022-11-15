@@ -20,21 +20,18 @@
 			<form onsubmit="event.preventDefault()" id="LoginPage.Form">
 
 				<div id="LoginPage.Form.EmailDiv">
-					<input type="text" placeholder="Email" name="email" id="LoginPage.Form.Email">
-
-					<input type="checkbox" value="lsRememberMe" id="LoginPage.Form.RememberMeCkhBx">
-					<label for="LoginPage.Form.RememberMeCkhBx">Remember me</label>
-				</div>
+					<input type="text" placeholder="Email" id="email">
+					<input type="checkbox" id="checkbox" name="checkbox">
+					<label for="checkbox">Remember me</label>				</div>
 
 				<div id="LoginPage.Form.PasswordDiv">
-					<input type="password" placeholder="Password" class="bieye" id="LoginPage.Form.Password"/>
-					<i class="bi bi-eye-slash" for="LoginPage.Form.Password"></i>
+					<input type="password" placeholder="Password" class="bieye" name="password" id="password"/>
+					<i class="bi bi-eye-slash" for="password"></i>
 				</div>
 
 				<div id="loginStatus"></div></br>
 
-				<input type="submit" class="w3-teal" value="Login" 
-					id="LoginPage.Form.SubmitLogin">
+				<input type="submit" class="w3-teal" id="submitLogin">
 			</form>
 		</div>
 		<div class="w3-container container" id="app">
@@ -45,14 +42,22 @@
 				</div>
 				<div class="w3-container w3-cell">
 					<button id = "callBtn" class = "btn-success btn">Call</button>
-					<button id = "hangUpBtn" class = "btn-danger btn hidden">Hang Up</button>					
-				</div> 
+					<button id = "hangUpBtn" class = "btn-danger btn">Hang Up</button>					
+				</div>
 			</div>
-			<div class="w3-cell-row" id="dataArea"></div>
+		</br></br>
+			<div id="sendFile" class="w3-cell-row hidden">
+				<input type="file" id="inFile">
+			</div>
+		</br></br>
+			<div class="w3-cell-row hidden" id="outFile">
+				<button id = "saveFileBtn" class="hidden">Save File</button>
+			</div>
+
 	</body>
 		<script src="https://sdk.amazonaws.com/js/aws-sdk-2.726.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.5.0/simplepeer.min.js"></script>
 		<!--script src="simplepeer-unmin.js"></script-->
     <!--script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script-->
-    <script type="module" src="bc-main.mjs"></script>
+    <script type="module" src="noBCE-main.mjs"></script>
 </html>

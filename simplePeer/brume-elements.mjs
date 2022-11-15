@@ -60,3 +60,50 @@ class Call extends HTMLElement {
 }
 
 customElements.define('brume-call', Call);
+
+class Login extends HTMLElement {
+	instance = this;
+	name;
+	constructor() {
+		super();
+	}
+
+	connectedCallback() {
+		
+		this.innerHTML = `
+			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css" />
+			<div id="emailDiv">
+				<input type="text" placeholder="Email" id="email">
+				<input type="checkbox" id="checkbox" name="checkbox">
+				<label for="checkbox">Remember me</label>
+			</div>
+
+			<div id="passwordDiv">
+				<input type="password" placeholder="Password" class="bieye" name="password" id="password"/>
+				<i class="bi bi-eye-slash" for="password"></i>
+			</div>
+
+			<div id="loginStatus"></div></br>
+
+			<input type="submit" class="w3-teal" id="submitLogin">
+    `;
+
+		this.loaded = true;
+		this.email = document.querySelector('#email');
+		this.password = document.querySelector('#password');
+		this.checkbox = document.querySelector('#checkbox');
+		this.submitLogin = document.querySelector('#submitLogin');
+		this.loginStatus = document.querySelector('#loginStatus');
+
+		const bi = document.querySelector('i.bi');
+		bi.addEventListener('click', doToggle);
+
+		function doToggle(event) {
+			let password = document.getElementById(event.currentTarget.attributes.getNamedItem('for').value);
+			password.type = password.type === "password" ? "text" : "password";
+			event.currentTarget.classList.toggle("bi-eye");
+		}
+	}
+}
+
+customElements.define('brume-login', Login);

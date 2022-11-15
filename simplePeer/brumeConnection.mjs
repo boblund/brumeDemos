@@ -1,7 +1,7 @@
 'use strict';
 
 export {BrumeConnection};
-import {getToken} from '../brumeLogin.mjs';
+import {getToken} from './brumeLogin.mjs';
 import {BrumePeer} from './brumePeer.mjs';
 
 const delay = t => new Promise(resolve => setTimeout(resolve, t));
@@ -13,26 +13,50 @@ let token = null,
 const divLogin = document.querySelector('div#login');
 const divApp = document.querySelector('div#app');
 
+function appLoginDisplay(state) {
+	switch(state) {
+		case 'none':
+			divLogin.style.display = 'none';
+			divApp.style.display = 'none';
+			break;
 
-divLogin.classList.add('hidden');
-divApp.classList.add('hidden');
+		case 'login':
+			divLogin.style.display = '';
+			divApp.style.display = 'none';
+			break;
+
+		case 'app':
+			divLogin.style.display = 'none';
+			divApp.style.display = '';
+			break;
+		
+		default:
+	}
+}
+
+appLoginDisplay('none');
+//divLogin.classList.add('hidden');
+//divApp.classList.add('hidden');
 
 token = getToken(_token => {
 	token = _token;
 	myName = JSON.parse(atob(token.split('.')[1]))['custom:brume_name'];
-	divLogin.classList.add('hidden');
-	divApp.classList.remove('hidden');
+	appLoginDisplay('app');
+	//divLogin.classList.add('hidden');
+	//divApp.classList.remove('hidden');
 	loginWait.dispatchEvent(new CustomEvent('loggedIn'));
 });
 
 if(token != null) {
 	// Delay if reload due to AWS websocket connect/disconnect race condition
 	await delay(sessionStorage.reload ? 1000 : 0);
-	divLogin.classList.add('hidden');
-	divApp.classList.remove('hidden');
+	appLoginDisplay('app');
+	//divLogin.classList.add('hidden');
+	//divApp.classList.remove('hidden');
 	sessionStorage.reload = 'yes';
 } else {
-	divLogin.classList.remove('hidden');
+	appLoginDisplay('login');
+	//divLogin.classList.remove('hidden');
 }
 
 function BrumeConnection(offerHandler) {

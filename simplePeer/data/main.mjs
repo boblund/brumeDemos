@@ -1,59 +1,36 @@
 'use strict';
 
-import {BrumePeer} from '../brumePeer.mjs';
-import {getToken} from '../../brumeLogin.mjs';
-
-/***** This section doesn't change between apps that use the Brume app template *****/
-let token = null,
-	myName = null,
-	brumeConnection = null;
-
-const divLogin = document.querySelector('div#login');
-const divApp = document.querySelector('div#app');
-
-divLogin.classList.add('hidden');
-divApp.classList.add('hidden');
-
-token = getToken(loginCallBack);
-
-if(token != null) {
-	divLogin.classList.add('hidden');
-	divApp.classList.remove('hidden');
-
-	// Delay if reload due to AWS websocket connect/disconnect race condition
-	setTimeout(
-		async ()=> {
-			await loginCallBack(token),
-			divApp.classList.remove('hidden');
-		},
-		sessionStorage.reload ? 1000 : 0
-	);
-	sessionStorage.reload = 'yes';
-
-} else {
-	divLogin.classList.remove('hidden');
+import {BrumeConnection} from '../brumeConnection.mjs';
+const brumeConnection = await (new BrumeConnection(offerHandler));
+let callElem;
+if(!customElements.get('brume-call') || !(callElem = document.getElementById('call'))) {
+	callElem = new function(){
+		return {
+			// Mimic custom brume-call element API
+			callBtn: document.getElementById('callBtn'),
+			hangUpBtn: document.getElementById('hangUpBtn'),
+			name: document.getElementById('name'),
+			call() {
+				this.callBtn.style.display='';
+				this.hangUpBtn.style.display='none';
+			},
+			hangUp() {
+				this.callBtn.style.display='none';
+				this.hangUpBtn.style.display='';
+			}
+		};
+	};
 }
 
-async function loginCallBack(brumeToken) {
-	token = brumeToken;
-	myName = JSON.parse(atob(token.split('.')[1]))['custom:brume_name'];
-	divLogin.classList.add('hidden');
-	brumeConnection = await (new BrumePeer(myName, offerHandler, token));
-	divApp.classList.remove('hidden');
-};
-/***** End of section that doesn't change between apps that use the Brume app template *****/
+/*****App specific handling of peer connection events *****/
 
-// App stuff
+function peerInit(peer, peerName) {
+	peer.peerUsername = peerName;
 
-let peer = null;
-let peerUsername = null;
-
-function peerInit(peer) {
 	peer.on('connect', () => {
-		hangUpBtn.classList.remove('hidden');
-		callBtn.classList.add('hidden');
+		callElem.hangUp();
 		console.log(`caller data channel open`);
-		peer.send(`Hi ${peerUsername}`);
+		peer.send(`Hi ${peer.peerUsername}`);
 	});
 
 	peer.on('data', data => {
@@ -82,53 +59,46 @@ function peerInit(peer) {
 	});
 }
 
-// App brumeConnection action handlers
+/***** App specific handling of Brume signaling events *****/
+
+let peer = null;
 
 async function offerHandler(offer, name, channelId) {
 	if(confirm(`Accept call from ${name}?`)){
-		peerUsername = name;
+		callElem.name.value = `call from ${name}`;
 		peer = brumeConnection.makePeer({channelId});
-		peerInit(peer);
+		peerInit(peer, name);
 		await peer.connect(name, offer);
 	}
 };
 
 function handleClose() {
-	console.log('closing connection');
-	peerUsername = null;
 	peer = null;
-	callBtn.classList.remove('hidden');
-	hangUpBtn.classList.add('hidden');
+	callElem.call();
 	dataArea.innerHTML='';
-	callToUsernameInput.value = '';
+	callElem.name.value = '';
 };
 
-// App UI logic
+/***** App UI logic *****/
 
-const callToUsernameInput = document.querySelector('#callToUsernameInput');
-const callBtn = document.querySelector('#callBtn');
-const hangUpBtn = document.querySelector('#hangUpBtn');
 const dataArea = document.querySelector('#dataArea');
-callBtn.classList.remove('hidden');
-hangUpBtn.classList.add('hidden');
 
+callElem.call();
 
 // call button handler
-callBtn.addEventListener('click', async (e) => {		 
-	if (callToUsernameInput.value.length > 0) { 
-		peerUsername = callToUsernameInput.value;
+callElem.callBtn.addEventListener('click', async (e) => {		 
+	if (callElem.name.value.length > 0) { 
 		peer = brumeConnection.makePeer({initiator: true});
-		peer.peerUsername = callToUsernameInput.value;
-		peerInit(peer);
-		await peer.connect(callToUsernameInput.value);
+		peerInit(peer, callElem.name.value);
+		await peer.connect(callElem.name.value);
 	}
 });
 
 // hangup button handler
-hangUpBtn.addEventListener("click", function () {
+callElem.hangUpBtn.addEventListener("click", function () {
 	peer.close();
 	peer.destroy();
 	peer = null;
-	hangUpBtn.classList.add('hidden');
-	callBtn.classList.remove('hidden');
+	callElem.call();
+	callElem.name.value = '';
 });
