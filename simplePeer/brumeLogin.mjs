@@ -2,20 +2,11 @@
 
 export {getToken};
 
-let brumeLogin = {};
+let brumeLogin = null;
 
 if(customElements.get('brume-login')){
 	brumeLogin = document.getElementById('brumeLogin');
 	brumeLogin.submitLogin.addEventListener('click', processLogin);
-/*	brumeLogin = new function(){
-		return {
-			submitLogin: document.getElementById('login.submitLogin'),
-			email: document.getElementById('login.email'),
-			password: document.getElementById('login.password'),
-			checkBox: document.getElementById('login.rememberMeChkBx'),
-			loginStatus: document.getElementById('login.loginStatus')
-		};
-	};*/
 }
 
 const CLIENTID = '6dspdoqn9q00f0v42c12qvkh5l';
