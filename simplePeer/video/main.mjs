@@ -32,15 +32,15 @@ function peerInit(peer) {
 	peer.on('peerError', (data) => {
 		switch(data.code) {
 			case 'ENODEST':
-				alert(`${data.edata.receiver} is not connected`);
+				alert(`${data.peerUsername} is not connected`);
 				break;
 
 			case 'EOFFERTIMEOUT':
-				alert(`${data.edata.receiver} did not answer`);
+				alert(`${data.peerUsername} did not answer`);
 				break;
 
 			default:
-				alert(`peerError: ${data.data}`);
+				alert(`peerError: ${data}`);
 		}
 		handleClose();
 	});
@@ -92,9 +92,11 @@ function handleClose() {
 	peer = null;
 	callElem.call();
 	callElem.name.value = '';
-	localStream.getTracks().forEach(media => { media.enabled = false; });
-	localStream.getVideoTracks()[0].stop();
-	localStream = null;
+	if(localStream != null) {
+		localStream.getTracks().forEach(media => { media.enabled = false; });
+		localStream.getVideoTracks()[0].stop();
+		localStream = null;
+	}
 	firstUserGesture = true;
 
 	Array.from(document.getElementsByTagName('video')).forEach(video => {

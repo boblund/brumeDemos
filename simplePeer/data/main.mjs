@@ -2,25 +2,7 @@
 
 import {BrumeConnection} from '../brumeConnection.mjs';
 const brumeConnection = await (new BrumeConnection(offerHandler));
-let callElem;
-if(!customElements.get('brume-call') || !(callElem = document.getElementById('call'))) {
-	callElem = new function(){
-		return {
-			// Mimic custom brume-call element API
-			callBtn: document.getElementById('callBtn'),
-			hangUpBtn: document.getElementById('hangUpBtn'),
-			name: document.getElementById('name'),
-			call() {
-				this.callBtn.style.display='';
-				this.hangUpBtn.style.display='none';
-			},
-			hangUp() {
-				this.callBtn.style.display='none';
-				this.hangUpBtn.style.display='';
-			}
-		};
-	};
-}
+const callElem = customElements.get('brume-call') ? document.getElementById('call') : null;
 
 /*****App specific handling of peer connection events *****/
 
@@ -45,15 +27,15 @@ function peerInit(peer, peerName) {
 	peer.on('peerError', (data) => {
 		switch(data.code) {
 			case 'ENODEST':
-				alert(`${data.edata.receiver} is not connected`);
+				alert(`${data.peerUsername} is not connected`);
 				break;
 
 			case 'EOFFERTIMEOUT':
-				alert(`${data.edata.receiver} did not answer`);
+				alert(`${data.peerUsername} did not answer`);
 				break;	
 	
 			default:
-				alert(`peerError: ${data.data}`);
+				alert(`peerError: ${data}`);
 		}
 		handleClose();
 	});

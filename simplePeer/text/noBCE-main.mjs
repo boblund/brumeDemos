@@ -90,15 +90,15 @@ function peerInit(peer) {
 	peer.on('peerError', (data) => {
 		switch(data.code) {
 			case 'ENODEST':
-				alert(`${data.edata.receiver} is not connected`);
+				alert(`${data.peerUsername} is not connected`);
 				break;
 
 			case 'EOFFERTIMEOUT':
-				alert(`${data.edata.receiver} did not answer`);
+				alert(`${data.peerUsername} did not answer`);
 				break;
 
 			default:
-				alert(`peerError: ${data.data}`);
+				alert(`peerError: ${data}`);
 		}
 		handleClose();
 	});
@@ -122,7 +122,7 @@ function handleClose() {
 	peer = null;
 	callBtn.style.display = '';
 	hangUpBtn.style.display = 'none';
-	callToUsernameInput.value = '';
+	name.value = '';
 	chatArea.innerHTML = '';
 	chatArea.style.display = 'none';
 	chatInput.style.display = 'none';
@@ -130,10 +130,9 @@ function handleClose() {
 
 // App UI logic
 
-const callToUsernameInput = document.querySelector('#callToUsernameInput');
+const name = document.querySelector('#name');
 const callBtn = document.querySelector('#callBtn');
 const hangUpBtn = document.querySelector('#hangUpBtn');
-const dataArea = document.querySelector('#dataArea');
 callBtn.style.display = '';
 hangUpBtn.style.display = 'none';
 
@@ -159,12 +158,12 @@ sendMsgBtn.addEventListener("click", function (event) {
 
 // call button handler
 callBtn.addEventListener('click', async (e) => {		 
-	if (callToUsernameInput.value.length > 0) { 
-		peerUsername = callToUsernameInput.value;
+	if (name.value.length > 0) { 
+		peerUsername = name.value;
 		peer = brumeConnection.makePeer({initiator: true});
-		peer.peerUsername = callToUsernameInput.value;
+		peer.peerUsername = name.value;
 		peerInit(peer);
-		await peer.connect(callToUsernameInput.value);
+		await peer.connect(name.value);
 	}
 });
 

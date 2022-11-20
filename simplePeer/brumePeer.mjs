@@ -37,7 +37,7 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 			};
 	
 			ws.onerror = err => {
-				rej(null);
+				rej(err);
 			};
 	
 			ws.onmessage = msg => {
@@ -68,10 +68,10 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 						break;
 
 					case 'peerError':
-						if(peers[data.edata.channelId]) {
-							clearTimeout(peers[data.edata.channelId].offerTimer);
-							peers[data.edata.channelId].emit('peerError', data);
-							delete peers[data.edata.channelId];
+						if(peers[data.channelId]) {
+							clearTimeout(peers[data.channelId].offerTimer);
+							peers[data.channelId].emit('peerError', data);
+							delete peers[data.channelId];
 						}
 						break;
 	
