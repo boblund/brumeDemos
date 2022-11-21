@@ -150,9 +150,11 @@ function handleClose() {
 	callBtn.classList.remove('hidden');
 	hangUpBtn.classList.add('hidden');
 	callToUsernameInput.value = '';
-	localStream.getTracks().forEach(media => { media.enabled = false; });
-	localStream.getVideoTracks()[0].stop();
-	localStream = null;
+	if(localStream != null) {
+		localStream.getTracks().forEach(media => { media.enabled = false; });
+		localStream.getVideoTracks()[0].stop();
+		localStream = null;
+	}
 	firstUserGesture = true;
 
 	Array.from(document.getElementsByTagName('video')).forEach(video => {
