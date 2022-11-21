@@ -20,7 +20,7 @@ function peerInit(peer) {
 		sendFile.style.display = '';
 	});
 
-	peer.once('data', saveResultHandler);
+	peer.on('data', dataHandler);
 
 	peer.on('closed', () => {
 		console.log(`peer closed`);
@@ -30,15 +30,15 @@ function peerInit(peer) {
 	peer.on('peerError', (data) => {
 		switch(data.code) {
 			case 'ENODEST':
-				alert(`${data.edata.receiver} is not connected`);
+				alert(`${data.peerUsername} is not connected`);
 				break;
 
 			case 'EOFFERTIMEOUT':
-				alert(`${data.edata.receiver} did not answer`);
+				alert(`${data.peerUsername} did not answer`);
 				break;
 
 			default:
-				alert(`peerError: ${data.data}`);
+				alert(`peerError: ${data}`);
 		}
 		handleClose();
 	});
@@ -58,12 +58,13 @@ inFile.onchange = (evt) => {
 	reader = stream.getReader();
 };
 
-async function saveResultHandler(_msg) {
-	let	received = 0,
-		size = 0,
-		name = '',
-		writableStream = null,
-		msg = JSON.parse(_msg.toString());
+let received = 0,
+	size = 0,
+	name = '',
+	writableStream = null;
+
+async function dataHandler(_msg) {
+	let	msg = JSON.parse(_msg.toString());
 		
 	switch(msg.type) {
 		case 'start':
@@ -77,36 +78,33 @@ async function saveResultHandler(_msg) {
 				saveFileBtn.style.display = 'none';
 				peer.send(JSON.stringify({type: 'ready'}));
 			});
+			break;
 
-			peer.on('data', async _msg => {
-				let msg = JSON.parse(_msg.toString());
-				switch(msg.type) {
-					case 'chunk':
-						const chunk = new Uint8Array(msg.data);
-						received += chunk.length;
-						await writableStream.write(chunk);
-						break;
-			
-					case 'eof':
-						if(received < size){
-							peer.send(JSON.stringify({type: 'result', status: 'failed: received too few bytes'}));
-							alert('Transfer ' + 'failed: received too few bytes');
-						} else {
-							peer.send(JSON.stringify({type: 'result', status: 'succeeded'}));
-							alert('Transfer ' + 'succeeded');
-						}
-						await writableStream.close();
-						received = 0;
-						size = 0;
-						name = '';
-						writableStream = null;
-						reader = null;
-						outFile.style.display = 'none';
-						inFile.style.display = '';
-						break;
-				}
-			});
-			
+		case 'chunk':
+			const chunk = new Uint8Array(msg.data);
+			received += chunk.length;
+			await writableStream.write(chunk);
+			break;
+
+		case 'eof':
+			let status = received == size ? 'succeeded' : `failed: file size: ${size} received: ${received}`;
+			peer.send(JSON.stringify({type: 'result', status}));
+			alert('Transfer ' + status);
+			/*if(received < size){
+				peer.send(JSON.stringify({type: 'result', status: 'failed: received too few bytes'}));
+				alert('Transfer ' + 'failed: received too few bytes');
+			} else {
+				peer.send(JSON.stringify({type: 'result', status: 'succeeded'}));
+				alert('Transfer ' + 'succeeded');
+			}*/
+			await writableStream.close();
+			received = 0;
+			size = 0;
+			name = '';
+			writableStream = null;
+			reader = null;
+			outFile.style.display = 'none';
+			inFile.style.display = '';
 			break;
 
 		case 'ready':
@@ -118,11 +116,10 @@ async function saveResultHandler(_msg) {
 				}
 				peer.send(JSON.stringify({type: 'chunk', data: Array.from(value)}));
 			}
-
 			break;
 
 		case 'result':
-			alert('Transfer ' + msg.result);
+			alert('Transfer ' + msg.status);
 			received = 0;
 			size = 0;
 			name = '';
@@ -151,8 +148,10 @@ async function offerHandler(offer, name, channelId) {
 
 function handleClose() {
 	console.log('closing connection');
-	peer.close();
-	peer.destroy();
+	if(peer) {
+		peer.close();
+		peer.destroy();
+	}
 	peer = null;
 	callElem.call();
 	callElem.name.value = '';
