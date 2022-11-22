@@ -44,7 +44,8 @@ function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
 					rejectUnauthorized: false
 				});
 			} else {
-				ws = new WebSocket(`${location.protocol == 'https:' ? 'wss' : 'ws'}://${location.host}?token=${token}`);
+				const _url = location.host == 'brume.occams.solutions' ? location.host + '/Prod' : location.host;
+				ws = new WebSocket(`${location.protocol == 'https:' ? 'wss' : 'ws'}://${_url}?token=${token}`);
 			}
 	
 			const pingInterval = setInterval(function ping() {
