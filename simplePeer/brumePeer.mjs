@@ -1,39 +1,66 @@
 'use script';
 
-// https://medium.com/@AkashHamirwasia/new-ways-of-sharing-files-across-devices-over-the-web-using-webrtc-2554abaeb2e6
-
 export {BrumePeer};
 
-function BrumePeer (myName, offerHandler, token) {		//es6ify
-	let //myName = _myName,
-		//offerHandler = _offerHandler,
-		instance = this,
+let SimplePeer = typeof window != 'undefined' ? window.SimplePeer : null,
+	wrtc, _ws;
+
+(async function() {
+	if(typeof window == 'undefined') {
+		SimplePeer = (await import('simple-peer')).default;
+		const os = (await import('os')).default;
+		wrtc = (os.cpus()[0].model == 'Apple M1') && (os.arch() == 'arm64')
+			? (await import('@koush/wrtc')).default
+			: (await import('wrtc')).default;
+		_ws = (await import('ws')).default;
+	}
+})();
+
+function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
+	let instance = this,
 		sendMessage = null,
 		peers = {};
+
+	this.offerHandler = _offerHandler;
 
 	function offerTimeout(peer) {
 		peer.emit('peerError', {
 			type: "peerError",
 			code: "EOFFERTIMEOUT",
-			edata: {
-				channelId: peer.channelId,
-				receiver: peer.peerUsername
-			}
+			channelId: peer.channelId,
+			peerUsername: peer.peerUsername
 		});
 		delete peers[peer];
 	}
 
+	
 	function wsConnect(token) {
 		return new Promise((res, rej) => {
-			let ws = new WebSocket(`${location.protocol == 'https:' ? 'wss' : 'ws'}://${location.host}?token=${token}`);
+			let ws;
+
+			if(typeof window == 'undefined') {
+				ws = new _ws(url, {
+					headers : { token: token},
+					rejectUnauthorized: false
+				});
+			} else {
+				ws = new WebSocket(`${location.protocol == 'https:' ? 'wss' : 'ws'}://${location.host}?token=${token}`);
+			}
 	
+			const pingInterval = setInterval(function ping() {
+				ws.ping(()=>{}); }, 9.8 * 60 * 1000);
+
 			ws.onopen = () => {
 				console.log('Connected to the signaling server');
+				// close can come before ws is set
+				ws.onclose = () => {
+					if(onServerClose) {
+						setTimeout(()=>{onServerClose('serverclose');}, 10*1000);  //give server time to delete closed session
+					}
+					clearInterval(pingInterval);
+					ws = null;
+				};
 				res(sendMessage);
-			};
-	
-			ws.onclose = (event) => { 
-				ws = null;
 			};
 	
 			ws.onerror = err => {
@@ -47,7 +74,7 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 	
 				switch (type) {
 					case 'offer':
-						offerHandler(data.data.offer, data.from, data.data.channelId);
+						instance.offerHandler(data.data.offer, data.from, data.data.channelId);
 						break;
 		
 					case 'answer':	
@@ -97,7 +124,7 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 	}
 
 	this.makePeer = (options) => {
-		const	peer = new SimplePeer(options);
+		const	peer = new SimplePeer({...options, trickle: false, wrtc: wrtc});
 		peer.myName = myName;
 
 		if(options.initiator) {
@@ -157,4 +184,5 @@ function BrumePeer (myName, offerHandler, token) {		//es6ify
 		sendMessage = await wsConnect(token);
 		return instance;
 	})();
-}
+};
+
