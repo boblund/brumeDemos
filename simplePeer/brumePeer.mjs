@@ -18,8 +18,22 @@ let SimplePeer = typeof window != 'undefined' ? window.SimplePeer : null,
 
 function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
 	let instance = this,
-		sendMessage = null,
-		peers = {};
+		peers = {},
+		ws;
+
+	function sendMessage(to, data){
+		if(ws == null) {
+			return false;
+		}
+	
+		ws.send(JSON.stringify({
+			action: 'send',
+			to,
+			data
+		}));
+
+		return true;
+	}
 
 	this.offerHandler = _offerHandler;
 
@@ -33,11 +47,8 @@ function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
 		delete peers[peer];
 	}
 
-	
 	function wsConnect(token) {
-		return new Promise((res, rej) => {
-			let ws;
-
+		return new Promise((res, rej) => {	
 			if(typeof window == 'undefined') {
 				ws = new _ws(url, {
 					headers : { token: token},
@@ -48,8 +59,9 @@ function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
 				ws = new WebSocket(`${location.protocol == 'https:' ? 'wss' : 'ws'}://${_url}?token=${token}`);
 			}
 	
-			const pingInterval = setInterval(function ping() {
-				ws.ping(()=>{}); }, 9.8 * 60 * 1000);
+			const pingInterval = typeof ws.ping === 'function'
+				? setInterval(function(){ws.ping(()=>{});}, 9.8 * 60 * 1000)
+				: null;
 
 			ws.onopen = () => {
 				console.log('Connected to the signaling server');
@@ -107,32 +119,18 @@ function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
 						break;
 				}
 			};
-	
-			function sendMessage(to, data){
-				if(ws == null) {
-					return false;
-				}
-			
-				ws.send(JSON.stringify({
-					action: 'send',
-					to,
-					data
-				}));
-	
-				return true;
-			}
 		});
 	}
 
-	this.makePeer = (options) => {
+	this.makePeer = async (options) => {
+		if(ws == null) {
+			// ws server closed websocket after page was loaded
+			await wsConnect(token); // should catch wsConnect errors
+		}
 		const	peer = new SimplePeer({...options, trickle: false, wrtc: wrtc});
 		peer.myName = myName;
 
-		if(options.initiator) {
-			peer.channelId = myName + Math.random().toString(10).slice(2,8,);
-		} else {
-			peer.channelId = options.channelId;
-		}
+		peer.channelId = options.initiator ? myName + Math.random().toString(10).slice(2,8) : options.channelId;
 
 		peers[peer.channelId] = peer;
 
@@ -182,7 +180,7 @@ function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
 	};
 
 	return (async () => {
-		sendMessage = await wsConnect(token);
+		await wsConnect(token);
 		return instance;
 	})();
 };
