@@ -1,0 +1,22 @@
+<html>
+	<head>
+		<title>Brume</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		<meta charset="UTF-8">
+		<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	</head>
+	<body>
+		<div id="login" class="hidden">
+			<brume-login id="brumeLogin" loaded="false"></brume-login>
+		</div>
+		<div class="w3-container container hidden" id="app">
+			<brume-call id="call" loaded="false"></brume-call>
+			<div class="w3-cell-row" id="dataArea"></div>
+		</div>
+	</body>
+	<script src="https://sdk.amazonaws.com/js/aws-sdk-2.726.0.js"></script>
+	<script src="node_modules/browser-cjs/require.js"></script>
+	<!--script src="simplepeer.min.js"></script-->
+	<script type='module' src='../brume-elements.mjs'></script>
+	<script type="module" src="main.mjs"></script>
+</html>
