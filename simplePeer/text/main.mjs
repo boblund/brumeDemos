@@ -67,7 +67,7 @@ async function offerHandler(offer, name, channelId) {
 	if(confirm(`Accept call from ${name}?`)){
 		callElem.name.value = `call from ${name}`;
 		peerUsername = name;
-		peer = brumeConnection.makePeer({channelId});
+		peer = await brumeConnection.makePeer({channelId});
 		peerInit(peer);
 		await peer.connect(name, offer);
 	}
@@ -113,7 +113,7 @@ sendMsgBtn.addEventListener("click", function (event) {
 callElem.callBtn.addEventListener('click', async (e) => {		 
 	if (callElem.name.value.length > 0) { 
 		peerUsername = callElem.name.value;
-		peer = brumeConnection.makePeer({initiator: true});
+		peer = await brumeConnection.makePeer({initiator: true});
 		peer.peerUsername = callElem.name.value;
 		peerInit(peer);
 		await peer.connect(callElem.name.value);

@@ -1,11 +1,10 @@
 'use script';
 
 export {BrumePeer};
-
 let SimplePeer = typeof window != 'undefined' ? window.SimplePeer : null,
 	wrtc, _ws;
 
-(async function() {
+/*(async function() {
 	if(typeof window == 'undefined') {
 		SimplePeer = (await import('simple-peer')).default;
 		const os = (await import('os')).default;
@@ -14,9 +13,9 @@ let SimplePeer = typeof window != 'undefined' ? window.SimplePeer : null,
 			: (await import('wrtc')).default;
 		_ws = (await import('ws')).default;
 	}
-})();
+})();*/
 
-function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
+function BrumePeer(myName, token, url, onServerClose) {
 	let instance = this,
 		peers = {},
 		ws;
@@ -34,8 +33,6 @@ function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
 
 		return true;
 	}
-
-	this.offerHandler = _offerHandler;
 
 	function offerTimeout(peer) {
 		peer.emit('peerError', {
@@ -83,7 +80,6 @@ function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
 			ws.onmessage = msg => {
 				const data = JSON.parse(msg.data);
 				const type = data.type == 'peerError' ? data.type : data.data.type;
-				console.log('Got message', type);
 	
 				switch (type) {
 					case 'offer':
@@ -180,6 +176,14 @@ function BrumePeer(myName, _offerHandler, token, url, onServerClose) {
 	};
 
 	return (async () => {
+		if(typeof window == 'undefined') {
+			SimplePeer = (await import('simple-peer')).default;
+			const os = (await import('os')).default;
+			wrtc = (os.cpus()[0].model == 'Apple M1') && (os.arch() == 'arm64')
+				? (await import('@koush/wrtc')).default
+				: (await import('wrtc')).default;
+			_ws = (await import('ws')).default;
+		}
 		await wsConnect(token);
 		return instance;
 	})();

@@ -64,7 +64,7 @@ function getToken(cb, _brumeLogin) {		//es6ify
 		brumeLogin.checkbox.setAttribute("checked", "checked");
 		brumeLogin.email.value = localStorage.email;
 	} else {
-		brumeLogin.checkBox.removeAttribute("checked");
+		//brumeLogin.checkBox.removeAttribute("checked");
 		brumeLogin.email.value = "";
 	}
 

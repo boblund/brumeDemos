@@ -1,6 +1,6 @@
 'use strict';
 
-import {BrumeConnection} from '../brumeConnection.mjs';
+import {BrumeConnection} from './brumeConnection.mjs';
 const brumeConnection = await (new BrumeConnection(offerHandler));
 let callElem = null;
 if(customElements.get('brume-call')) {
@@ -77,7 +77,10 @@ async function offerHandler(offer, name, channelId) {
 		callElem.name.value = `call from ${name}`;
 		peerUsername = name;
 		localStream = await getMedia();
-		peer = brumeConnection.makePeer({channelId, stream: localStream});
+		peer = await brumeConnection.makePeer({
+			iceServers: [{ 'urls': 'stun:stun2.1.google.com:19302' }],
+			channelId,
+			stream: localStream});
 		peerInit(peer);
 		await peer.connect(name, offer);
 		localDiv.style.visibility = 'visible';
@@ -134,7 +137,11 @@ callElem.callBtn.addEventListener('click', async (e) => {
 	if (callElem.name.value.length > 0) { 
 		peerUsername = callElem.name.value;
 		localStream = await getMedia();
-		peer = brumeConnection.makePeer({initiator: true, stream: localStream });
+		peer = await brumeConnection.makePeer({
+			//iceServers: [{ 'urls': 'stun:stun2.1.google.com:19302' }],
+			initiator: true,
+			stream: localStream 
+		});
 		peer.peerUsername = callElem.name.value;
 		peerInit(peer);
 		await peer.connect(callElem.name.value);
