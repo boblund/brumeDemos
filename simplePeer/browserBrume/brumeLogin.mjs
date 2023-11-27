@@ -23,7 +23,7 @@ function processLogin() {
 		localStorage.email = "";
 		localStorage.checkbox = "";
 	}
-
+	
 	const params = {
 		AuthFlow: "USER_PASSWORD_AUTH",
 		ClientId: CLIENTID,
@@ -46,36 +46,17 @@ function processLogin() {
 			if(data.ChallengeName && data.ChallengeName == "NEW_PASSWORD_REQUIRED"){
 				alert('New Password Required. Change your password at brume.occams.solutions.');
 			} else {
-				localStorage.Authorization = data.AuthenticationResult.IdToken;
+				//localStorage.Authorization = data.AuthenticationResult.IdToken;
 				loginCallBack(data.AuthenticationResult.IdToken);
 			}
 		}
 	});
 }
 
-function getToken(cb, _brumeLogin) {		//es6ify
-	loginCallBack = cb;
-	if(_brumeLogin) {
-		brumeLogin = _brumeLogin;
-		brumeLogin.submitLogin.addEventListener('click', processLogin);
-	}
-	
-	if (localStorage.checkbox && localStorage.checkbox !== "") {
-		brumeLogin.checkbox.setAttribute("checked", "checked");
-		brumeLogin.email.value = localStorage.email;
-	} else {
-		//brumeLogin.checkBox.removeAttribute("checked");
-		brumeLogin.email.value = "";
-	}
-
-	if(localStorage.Authorization && localStorage.Authorization != '') {
-		if(new Date(JSON.parse(atob(localStorage.Authorization.split('.')[1])).exp * 1000) >= new Date()) {
-			return (localStorage.Authorization);
-		} else {
-			delete localStorage.Authorization;
-			return null;
-		}
-	} else {
-		return null;
-	}
-};
+function getToken() {
+	return new Promise((res, rej) => {
+		loginCallBack = (token) => {
+			res(token);
+		};
+	});
+}

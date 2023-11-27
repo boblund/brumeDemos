@@ -18,10 +18,10 @@
   },
   "homepage": "https://github.com/boblund/brume#readme",
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.454.0",
     "aws-lambda-ws-server": "^0.1.21",
     "aws-sdk": "^2.1499.0",
     "browser-cjs": "^1.0.3",
+    "brume-client": "github:boblund/brume-client#browserbrume",
     "Channel": "github:boblund/js-caf",
     "events": "^3.3.0",
     "jsonwebtoken": "^8.5.1",

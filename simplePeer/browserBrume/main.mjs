@@ -1,8 +1,10 @@
 'use strict';
 
-import {BrumeConnection} from '../brumeConnection.mjs';
-const brumeConnection = await (new BrumeConnection(offerHandler));
-const callElem = customElements.get('brume-call') ? document.getElementById('call') : null;
+import {Brume} from './Brume.mjs';
+import {getToken} from './brumeLogin.mjs';
+
+const brume = new Brume(),
+	callElem = customElements.get('brume-call') ? document.getElementById('call') : null;
 
 /*****App specific handling of peer connection events *****/
 
@@ -58,14 +60,20 @@ function handleClose() {
 
 /***** App UI logic *****/
 
-const dataArea = document.querySelector('#dataArea');
+const dataArea = document.querySelector('#dataArea'),
+	divLogin = document.querySelector('div#login'),
+	divApp = document.querySelector('div#app');
 
 callElem.call();
 
-// call button handler
 callElem.callBtn.addEventListener('click', async (e) => {		 
 	if (callElem.name.value.length > 0) { 
-		peer = await brumeConnection.connect(callElem.name.value);
+		try {
+			peer = await brume.connect(callElem.name.value);
+		} catch(e) {
+			alert(`Could not connect to ${callElem.name.value}`);
+			return;
+		}
 		peer.on('close', () => {
 			handleClose();
 		});
@@ -77,7 +85,6 @@ callElem.callBtn.addEventListener('click', async (e) => {
 	}
 });
 
-// hangup button handler
 function hangupHandler(peer) {
 	//peer.close();
 	if(peer) peer.destroy();
@@ -86,4 +93,27 @@ function hangupHandler(peer) {
 	callElem.call();
 	callElem.name.value = '';
 }
-//});
+
+brume.onconnection = offerHandler;
+let token = localStorage?.Authorization,
+	triedLogin = false;
+
+while(true){
+	try {
+		if(!token) {
+			divLogin.style.display = '';
+			token = await getToken();
+			localStorage.Authorization = token;
+			triedLogin = true;
+		}
+		await brume.start({token, url: 'wss://brume.occams.solutions/Prod'});
+		break;
+	} catch(e) {
+		if(triedLogin) alert(`Connection to Brume failed. Try signing in again.`);
+		token = null;
+		delete localStorage.Authorization;
+	}
+}
+
+divLogin.style.display = 'none';
+divApp.style.display = '';
