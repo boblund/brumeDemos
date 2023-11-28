@@ -55,12 +55,13 @@ callElem.callBtn.addEventListener('click', async (e) => {
 callElem.call();
 brume.onconnection = offerHandler;
 
+
 while(true){
 	try {
 		if(!token) {
 			divLogin.style.display = '';
 			token = await getToken();
-			localStorage.Authorization = token;
+			//localStorage.Authorization = token;
 			triedLogin = true;
 		}
 		await brume.start({token, url: 'wss://brume.occams.solutions/Prod'});

@@ -9,6 +9,9 @@ if(customElements.get('brume-login')){
 	brumeLogin.submitLogin.addEventListener('click', processLogin);
 }
 
+brumeLogin.email.value = localStorage?.email ? localStorage.email : '';
+brumeLogin.checkbox.checked = localStorage?.checkbox ? localStorage.checkbox : false;
+
 const CLIENTID = '6dspdoqn9q00f0v42c12qvkh5l';
 const REGION = 'us-east-1';
 const cognito = new AWS.CognitoIdentityServiceProvider({region : REGION});
@@ -18,7 +21,7 @@ let loginCallBack = ()=> {};
 function processLogin() {
 	if (brumeLogin.checkbox.checked && brumeLogin.email.value !== "") {
 		localStorage.email = brumeLogin.email.value;
-		localStorage.checkbox = brumeLogin.checkbox.value;
+		localStorage.checkbox = brumeLogin.checkbox.checked;
 	} else {
 		localStorage.email = "";
 		localStorage.checkbox = "";
@@ -46,7 +49,8 @@ function processLogin() {
 			if(data.ChallengeName && data.ChallengeName == "NEW_PASSWORD_REQUIRED"){
 				alert('New Password Required. Change your password at brume.occams.solutions.');
 			} else {
-				//localStorage.Authorization = data.AuthenticationResult.IdToken;
+				if(brumeLogin.stayLoggedInCb.checked)
+					localStorage.Authorization = data.AuthenticationResult.IdToken;
 				loginCallBack(data.AuthenticationResult.IdToken);
 			}
 		}

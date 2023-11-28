@@ -83,6 +83,12 @@ class Login extends HTMLElement {
 				<i class="bi bi-eye-slash" for="password"></i>
 			</div>
 
+			<div id="stayLoggedInDiv">
+				<input type="checkbox" id="stayLoggedInCb" name="stayLoggedInCb">
+				<label for="stayLoggedInCb">Stay logged in</label>
+			</div>
+
+
 			<div id="loginStatus"></div></br>
 
 			<input type="submit" class="w3-teal" id="submitLogin">
@@ -92,6 +98,7 @@ class Login extends HTMLElement {
 		this.email = document.querySelector('#email');
 		this.password = document.querySelector('#password');
 		this.checkbox = document.querySelector('#checkbox');
+		this.stayLoggedInCb = document.querySelector('#stayLoggedInCb');
 		this.submitLogin = document.querySelector('#submitLogin');
 		this.loginStatus = document.querySelector('#loginStatus');
 
