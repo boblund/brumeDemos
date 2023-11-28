@@ -4,20 +4,28 @@ import {Brume} from './Brume.mjs';
 import {getToken} from './brumeLogin.mjs';
 
 const brume = new Brume(),
-	callElem = customElements.get('brume-call') ? document.getElementById('call') : null;
+	callElem = customElements.get('brume-call') ? document.getElementById('call') : null,
+	dataArea = document.querySelector('#dataArea'),
+	divLogin = document.querySelector('div#login'),
+	divApp = document.querySelector('div#app');
 
-/***** App specific handling of Brume signaling events *****/
+let token = localStorage?.Authorization,
+	triedLogin = false;
 
-let peer = null;
+function endPeerConnection(peer = undefined) {
+	if(peer) peer.destroy();
+	dataArea.innerHTML='';
+	callElem.call();
+	callElem.name.value = '';
+}
 
 function offerHandler(peer) {
 	if(confirm(`Accept call from ${peer.peerUsername}?`)){
 		callElem.name.value = `call from ${peer.peerUsername}`;
-		//peer = await brumeConnection.makePeer({channelId});
-		callElem.hangUpBtn.addEventListener("click", () => { hangupHandler(peer); });
+		callElem.hangUpBtn.addEventListener("click", () => { endPeerConnection(peer); });
 		callElem.hangUp();
 		peer.on('close', () => {
-			handleClose();
+			endPeerConnection();
 		});
 		peer.on('data', data => {
 			dataArea.innerHTML = `Data from ${peer.peerUsername}: ${data}`;
@@ -25,22 +33,8 @@ function offerHandler(peer) {
 	}
 };
 
-function handleClose() {
-	peer = null;
-	callElem.call();
-	dataArea.innerHTML='';
-	callElem.name.value = '';
-};
-
-/***** App UI logic *****/
-
-const dataArea = document.querySelector('#dataArea'),
-	divLogin = document.querySelector('div#login'),
-	divApp = document.querySelector('div#app');
-
-callElem.call();
-
-callElem.callBtn.addEventListener('click', async (e) => {		 
+callElem.callBtn.addEventListener('click', async (e) => {	
+	let peer = undefined;	 
 	if (callElem.name.value.length > 0) { 
 		try {
 			peer = await brume.connect(callElem.name.value);
@@ -49,27 +43,17 @@ callElem.callBtn.addEventListener('click', async (e) => {
 			return;
 		}
 		peer.on('close', () => {
-			handleClose();
+			endPeerConnection();
 		});
-		callElem.hangUpBtn.addEventListener("click", () => { hangupHandler(peer); });
+		callElem.hangUpBtn.addEventListener("click", () => { endPeerConnection(peer); });
 		callElem.hangUp();
 		console.log(`caller data channel open`);
 		peer.send(`Hi ${callElem.name.value}`);
 	}
 });
 
-function hangupHandler(peer) {
-	//peer.close();
-	if(peer) peer.destroy();
-	peer = null;
-	dataArea.innerHTML='';
-	callElem.call();
-	callElem.name.value = '';
-}
-
+callElem.call();
 brume.onconnection = offerHandler;
-let token = localStorage?.Authorization,
-	triedLogin = false;
 
 while(true){
 	try {
